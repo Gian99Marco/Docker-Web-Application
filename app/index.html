@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Technicians</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #4CAF50;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    select, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body onload="avvio()">
+  <div class="container">
+    <h1>CERCA TECNICI</h1>
+    <hr />
+    <div class="form-group">
+      <label for="select-regioni">Seleziona città:</label>
+      <select id="select-regioni">
+        <option value="" disabled selected>---</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="select-professioni">Seleziona professione:</label>
+      <select id="select-professioni">
+        <option value="" disabled selected>---</option>
+      </select>
+    </div>
+    <button onclick="cercaTecnico()">Cerca Tecnico</button>
+    <table id="tabella">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Cognome</th>
+          <th>Professioni</th>
+          <th>Città</th>
+          <th>Numero telefonico</th>
+        </tr>
+      </thead>
+      <tbody id="body-tabella"></tbody>
+    </table>
+  </div>
+  <script>
+    async function cercaTecnico() {
+      const select_città = document.getElementById('select-regioni');
+      const città = select_città.value;
+      const select_professione = document.getElementById('select-professioni');
+      const professione = select_professione.value;
+      const payload = { città, professione };
+      const response = await fetch('http://localhost:3000/get-tecnico', {
+        method: "POST",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const jsonResponse = await response.json();
+      const body = document.getElementById('body-tabella');
+      let dataHtml = "";
+      for (const tecnico of jsonResponse) {
+        dataHtml += `<tr><td>${tecnico.nome}</td><td>${tecnico.cognome}</td><td>${tecnico.professioni[0]}</td><td>${tecnico.città}</td><td>${tecnico.telefono}</td></tr>`;
+      }
+      body.innerHTML = dataHtml;
+    }
+
+    async function avvio() {
+      const select_regioni = document.getElementById('select-regioni');
+      const select_professioni = document.getElementById('select-professioni');
+      const response = await fetch('http://localhost:3000/get-select', { method: "POST" });
+      const jsonResponse = await response.json();
+      const professions = [...new Set(jsonResponse.flatMap(row => row.professioni))];
+      const cities = [...new Set(jsonResponse.map(row => row.città))];
+      select_regioni.innerHTML += cities.map(city => `<option>${city}</option>`).join('');
+      select_professioni.innerHTML += professions.map(profession => `<option>${profession}</option>`).join('');
+    }
+  </script>
+</body>
+</html>
